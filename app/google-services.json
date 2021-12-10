@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "639741888632",
+    "project_id": "khustargram",
+    "storage_bucket": "khustargram.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639741888632:android:53e11da8fdfd6eaa2a058d",
+        "android_client_info": {
+          "package_name": "com.example.khustargram"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "639741888632-6op9f5tbe3k93agqg36v8p8f5spo2hp7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDafBkq5HgM5jUvppUSj8292xrrnyibjFs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "639741888632-6op9f5tbe3k93agqg36v8p8f5spo2hp7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
