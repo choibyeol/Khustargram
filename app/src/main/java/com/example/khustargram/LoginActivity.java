@@ -4,8 +4,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -13,6 +19,12 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -24,19 +36,28 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
+
     private final String TAG = LoginActivity.class.getSimpleName();
 
     // google sign in
-    private static final int RC_SIGN_IN = 1000;
+    private static final int RC_SIGN_IN = 1000; // Intent request ID
     private FirebaseAuth auth;
     private GoogleSignInOptions gso;
     private GoogleApiClient mGoogleApiClient;
     private SignInButton googleSignInButton;
+
+    // facebook sign in
+    private LoginButton facebookSignInButton;
+    private CallbackManager callbackManager;
 
     // email sign in
     private EditText email;
@@ -70,6 +91,28 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         googleSignInButton = (SignInButton) findViewById(R.id.google_sign_in_button);
         googleSignInButton.setOnClickListener(this::onClick);
 
+        // facebook login
+        callbackManager = CallbackManager.Factory.create();
+        facebookSignInButton = (LoginButton) findViewById(R.id.facebook_login_button);
+        facebookSignInButton.setReadPermissions("email", "public_profile");
+        facebookSignInButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+
+                handleFacebookAccessToken(loginResult.getAccessToken());
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+
+            @Override
+            public void onError(FacebookException error) {
+
+            }
+        });
+
         // email login
         email = (EditText) findViewById(R.id.email_edittext);
         password = (EditText) findViewById(R.id.password_edittext);
@@ -97,6 +140,25 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 }
             }
         };
+        // facebook 설정에 넣을 hash key 확인하는 부분
+        // Context pContext = this.getApplication().getApplicationContext();
+        // printHashKey(pContext);
+    }
+
+    public static void printHashKey(Context pContext) {
+        try {
+            PackageInfo info = pContext.getPackageManager().getPackageInfo(pContext.getPackageName(), PackageManager.GET_SIGNATURES);
+            for (Signature signature : info.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                String hashKey = new String(Base64.encode(md.digest(), 0));
+                Log.i("TAG", "printHashKey() Hash Key: " + hashKey);
+            }
+        } catch (NoSuchAlgorithmException e) {
+            Log.e("TAG", "printHashKey()", e);
+        } catch (Exception e) {
+            Log.e("TAG", "printHashKey()", e);
+        }
     }
 
     @Override
@@ -132,6 +194,22 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
     private void firebaseAuthWithGoogle(GoogleSignInAccount account) {
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+        auth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (!task.isSuccessful()) {
+                            // 에러 발생 시 호출
+                        }
+                    }
+                });
+    }
+
+    // Facebook token을 Firebase로 넘겨주는 부분
+    private void handleFacebookAccessToken(AccessToken token) {
+
+        AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
+
         auth.signInWithCredential(credential)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override

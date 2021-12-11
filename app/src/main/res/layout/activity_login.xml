@@ -58,7 +58,8 @@
             android:layout_marginRight="20dp"
             android:layout_marginBottom="35dp"
             android:text="@string/signin_email" />
-        <Button
+        <com.facebook.login.widget.LoginButton
+            android:id="@+id/facebook_login_button"
             android:textColor="@color/colorWhite"
             android:background="@drawable/btn_signin_facebook"
             android:layout_width="match_parent"
