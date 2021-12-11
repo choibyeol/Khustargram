@@ -126,6 +126,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 // user signed in
                 if (user != null) {
+                    Log.i("TAG", "로그인 성공");
                     Toast.makeText(LoginActivity.this, "로그인에 성공했습니다.", Toast.LENGTH_SHORT).show();
 
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
@@ -143,6 +144,23 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         // facebook 설정에 넣을 hash key 확인하는 부분
         // Context pContext = this.getApplication().getApplicationContext();
         // printHashKey(pContext);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        auth.addAuthStateListener(mAuthListener);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (mAuthListener != null) {
+
+            auth.removeAuthStateListener(mAuthListener);
+        }
     }
 
     public static void printHashKey(Context pContext) {
