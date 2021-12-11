@@ -13,16 +13,30 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.auth.api.signin.GoogleSignInResult;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
     private final String TAG = LoginActivity.class.getSimpleName();
 
+    // google sign in
+    private static final int RC_SIGN_IN = 1000;
     private FirebaseAuth auth;
+    private GoogleSignInOptions gso;
+    private GoogleApiClient mGoogleApiClient;
+    private SignInButton googleSignInButton;
 
     // email sign in
     private EditText email;
@@ -37,8 +51,26 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Firebase login 통합 관리하는 object
         auth = FirebaseAuth.getInstance();
 
+        // google login options(요청 토큰, 요청 권한 등)
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken("639741888632-6op9f5tbe3k93agqg36v8p8f5spo2hp7.apps.googleusercontent.com")
+                .requestEmail()
+                .build();
+
+        // google login API
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this, (GoogleApiClient.OnConnectionFailedListener) this)
+                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                .build();
+
+        // google login button
+        googleSignInButton = (SignInButton) findViewById(R.id.google_sign_in_button);
+        googleSignInButton.setOnClickListener(this::onClick);
+
+        // email login
         email = (EditText) findViewById(R.id.email_edittext);
         password = (EditText) findViewById(R.id.password_edittext);
         emailLoginButton = (Button) findViewById(R.id.email_login_button);
@@ -67,12 +99,48 @@ public class LoginActivity extends AppCompatActivity {
         };
     }
 
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        // Firebase 접속 실패 시 호출
+    }
+
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.google_sign_in_button:
+                Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
+                startActivityForResult(signInIntent, RC_SIGN_IN);
+                break;
             case R.id.email_login_button:
                 createAndLoginEmail();
                 break;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+
+            if (result.isSuccess()) {
+                GoogleSignInAccount account = result.getSignInAccount();
+                firebaseAuthWithGoogle(account);
+            }
+        }
+    }
+
+    private void firebaseAuthWithGoogle(GoogleSignInAccount account) {
+        AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+        auth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (!task.isSuccessful()) {
+                            // 에러 발생 시 호출
+                        }
+                    }
+                });
     }
 
     // 이메일 회원가입 및 로그인
