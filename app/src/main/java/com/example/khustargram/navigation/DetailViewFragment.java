@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.khustargram.R;
 
+
 public class DetailViewFragment extends Fragment {
 
     @Nullable
