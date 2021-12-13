@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.Fragment;
 
 import com.example.khustargram.navigation.AddPhotoActivity;
+import com.example.khustargram.navigation.AddPhotoFragment;
 import com.example.khustargram.navigation.AlarmFragment;
 import com.example.khustargram.navigation.DetailViewFragment;
 import com.example.khustargram.navigation.GridFragment;
@@ -48,6 +49,9 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 case R.id.action_add_photo:
                     Log.i("TAG", "action_add_photo");
+                    Fragment addphotoFragment = new AddPhotoFragment();
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.main_content, addphotoFragment).commit();
                     return true;
                 case R.id.action_favorite:
                     Log.i("TAG", "action_favorite");
